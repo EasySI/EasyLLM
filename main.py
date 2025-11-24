@@ -7,7 +7,7 @@
 @Auther : WenC
 @Email  : mr.wenc2640@gmail.com
 @Time   : 2025-11-24 09:49:12
-@License: (C)Copyright 2025-2035, Mr.WenC
+@License: (C)Copyright 2025-2035, WenC
 @Desc   : 
 """
 
