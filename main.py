@@ -2,7 +2,6 @@
 # -*- coding:utf-8 -*-
 
 """
-@Project: EasyLLM
 @File   : main.py
 @Version: V1.0.0
 @Author : WenC
