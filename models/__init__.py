@@ -4,11 +4,11 @@
 """
 @File   : __init__.py
 @Version: v1.0.0
-@Auther : WenC
+@Author : WenC
+@Time   : 2025-11-24 21:52:42
 @Email  : mr.wenc2640@gmail.com
-@Time   : 2025-11-24 10:03:52
-@License: (C)Copyright 2025-2035, Mr.WenC
+@License: (C)Copyright 2025-2035, WenC
 @Desc   : 
 """
 
-# here put the import lib
+# here put the import libs
