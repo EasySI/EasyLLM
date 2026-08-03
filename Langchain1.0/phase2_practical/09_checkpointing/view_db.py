@@ -57,6 +57,7 @@ def view_database(db_path):
 
     conn.close()
 
+
 def main():
     """主函数"""
     base_dir = "C:/Users/wangy/Desktop/temp/langchain_v1_study/phase2_practical/09_checkpointing"
@@ -82,6 +83,7 @@ def main():
     print("\n💡 提示：")
     print("  - 如果显示'数据库文件不存在'，请先运行 main.py")
     print("  - 可以使用在线工具查看完整内容：https://sqliteviewer.app/")
+
 
 if __name__ == "__main__":
     main()

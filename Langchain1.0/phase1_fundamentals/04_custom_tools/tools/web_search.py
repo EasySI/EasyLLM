@@ -8,6 +8,7 @@
 from langchain_core.tools import tool
 from typing import Optional
 
+
 @tool
 def web_search(query: str, num_results: Optional[int] = 3) -> str:
     """
@@ -55,6 +56,7 @@ def web_search(query: str, num_results: Optional[int] = 3) -> str:
         output += f"{i}. {result}\n"
 
     return output.strip()
+
 
 # 测试工具
 if __name__ == "__main__":

@@ -1,16 +1,11 @@
 """
 LangChain 1.0 - Simple Agent (使用 create_agent)
-=====================================================
+=============================================
 
 本模块重点讲解：
-1. 使用 create_agent 创建 Agent（LangChain 1.0 新 API）
+1. 使用 create_agent 创建 Agent（LangChain 1.0 统一API）
 2. Agent 自动决定何时使用工具
 3. Agent 执行循环的工作原理
-
-⚠️ 重要更新：
-- LangChain 1.0 中，Agent 创建使用 `create_agent`
-- 它来自 `langchain.agents` 模块（LangChain 1.0 新增）
-- 旧的 `create_react_agent`（langgraph.prebuilt）已弃用
 """
 
 import os
@@ -22,27 +17,20 @@ sys.path.insert(0, os.path.join(parent_dir, '04_custom_tools', 'tools'))
 
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
-from langchain.agents import create_agent  # ✅ LangChain 1.0 API
-from langgraph.checkpoint.memory import MemorySaver  # 用于多轮对话
+from langchain.agents import create_agent  # LangChain 1.0 统一 API
 
 # 导入自定义工具
 from weather import get_weather
 from calculator import calculator
 from web_search import web_search
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
-# 初始化模型
 model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
 
 
 # ============================================================================
@@ -53,7 +41,7 @@ def example_1_basic_agent():
     示例1：创建最简单的 Agent
 
     关键：
-    1. 使用 create_agent 函数（LangChain 1.0 API）
+    1. 使用 create_agent 函数
     2. 传入 model 和 tools
     3. Agent 会自动决定是否使用工具
     """
@@ -61,16 +49,14 @@ def example_1_basic_agent():
     print("示例 1：创建第一个 Agent")
     print("="*70)
 
-    # ✅ LangChain 1.0 API：create_agent
+    # 创建 Agent
     agent = create_agent(
         model=model,
-        tools=[get_weather],  # 只给一个工具
-        system_prompt="你是一个有帮助的助手，可以查询天气信息。"
+        tools=[get_weather]  # 只给一个工具
     )
 
     print("\nAgent 创建成功！")
     print("配置的工具：get_weather")
-    print("使用 LangChain 1.0 API：create_agent")
 
     # 测试：需要工具的问题
     print("\n测试1：询问天气（需要工具）")
@@ -93,6 +79,7 @@ def example_1_basic_agent():
     print("  - 需要工具时：调用工具 → 获取结果 → 生成回答")
     print("  - 不需要时：直接回答")
 
+
 # ============================================================================
 # 示例 2：多工具 Agent
 # ============================================================================
@@ -109,8 +96,7 @@ def example_2_multi_tool_agent():
     # 创建配置多个工具的 Agent
     agent = create_agent(
         model=model,
-        tools=[get_weather, calculator, web_search],
-    system_prompt="你是一个有帮助的助手。"
+        tools=[get_weather, calculator, web_search]
     )
 
     print("\n配置的工具：")
@@ -140,6 +126,7 @@ def example_2_multi_tool_agent():
     print("  - Agent 从多个工具中选择最合适的")
     print("  - 基于工具的 docstring 理解工具用途")
 
+
 # ============================================================================
 # 示例 3：带系统提示的 Agent
 # ============================================================================
@@ -147,23 +134,21 @@ def example_3_agent_with_system_prompt():
     """
     示例3：自定义 Agent 的行为
 
-    使用 prompt 参数（注意：不是 system_prompt）
+    使用 system_prompt 参数
     """
     print("\n" + "="*70)
     print("示例 3：自定义 Agent 行为")
     print("="*70)
 
-    # create_agent 使用 system_prompt 参数（字符串或 SystemMessage）
-    system_message = """你是一个友好的助手。
+    # 创建带系统提示的 Agent
+    agent = create_agent(
+        model=model,
+        tools=[get_weather, calculator],
+        system_prompt="""你是一个友好的助手。
 特点：
 - 回答简洁明了
 - 使用工具前先说明
 - 结果用表格或列表清晰展示"""
-
-    agent = create_agent(
-        model=model,
-        tools=[get_weather, calculator],
-        system_prompt=system_message  # ✅ 使用 system_prompt 参数
     )
 
     print("\n测试：自定义行为的 Agent")
@@ -174,12 +159,29 @@ def example_3_agent_with_system_prompt():
     print(f"\nAgent 回复：{response['messages'][-1].content}")
 
     print("\n关键点：")
-    print("  - system_prompt 参数定义 Agent 的系统提示")
+    print("  - system_prompt 定义 Agent 的行为风格")
     print("  - 可以指定输出格式、语气、工作流程等")
-    print("  - 也可以传入 SystemMessage 对象")
+
 
 # ============================================================================
 # 示例 4：Agent 执行过程详解
+""" Agent 执行过程：
+
+完整消息历史：
+
+--- 消息 1 (HumanMessage) ---
+内容：25 乘以 8 等于多少？
+
+--- 消息 2 (AIMessage) ---
+内容：
+工具调用：[{'name': 'calculator', 'args': {'a': 25, 'b': 8, 'operation': 'multiply'}, 'id': '3022d92m1', 'type': 'tool_call'}]
+
+--- 消息 3 (ToolMessage) ---
+内容：25.0 multiply 8.0 = 200.0
+
+--- 消息 4 (AIMessage) ---
+内容：25 乘以 8 等于 200。
+"""
 # ============================================================================
 def example_4_agent_execution_details():
     """
@@ -193,8 +195,7 @@ def example_4_agent_execution_details():
 
     agent = create_agent(
         model=model,
-        tools=[calculator],
-    system_prompt="你是一个有帮助的助手。"
+        tools=[calculator]
     )
 
     print("\n问题：25 乘以 8 等于多少？")
@@ -221,54 +222,46 @@ def example_4_agent_execution_details():
     4. AI 基于结果生成答案 → AIMessage (最终回答)
     """)
 
+
 # ============================================================================
-# 示例 5：多轮对话 Agent（使用 MemorySaver）
+# 示例 5：多轮对话 Agent
 # ============================================================================
 def example_5_multi_turn_agent():
     """
     示例5：Agent 的多轮对话
 
-    关键：使用 MemorySaver 保持对话历史
+    关键：传入历史消息
     """
     print("\n" + "="*70)
     print("示例 5：多轮对话 Agent")
     print("="*70)
 
-    # 创建内存检查点
-    memory = MemorySaver()
-
-    # 创建带记忆的 Agent
     agent = create_agent(
         model=model,
-        tools=[calculator],
-        system_prompt="你是一个有帮助的助手。",
-            checkpointer=memory  # ✅ 添加检查点以支持多轮对话
+        tools=[calculator]
     )
-
-    # 使用 thread_id 来保持对话
-    config = {"configurable": {"thread_id": "conversation-1"}}
 
     # 第一轮
     print("\n用户：10 加 5 等于多少？")
-    response1 = agent.invoke(
-        {"messages": [{"role": "user", "content": "10 加 5 等于多少？"}]},
-        config=config
-    )
+    response1 = agent.invoke({
+        "messages": [{"role": "user", "content": "10 加 5 等于多少？"}]
+    })
     print(f"Agent：{response1['messages'][-1].content}")
 
-    # 第二轮：继续上一轮的对话（记忆自动保持）
+    # 第二轮：继续上一轮的对话
     print("\n用户：再乘以 3 呢？")
-    response2 = agent.invoke(
-        {"messages": [{"role": "user", "content": "再乘以 3 呢？"}]},
-        config=config  # 使用相同的 thread_id
-    )
+    response2 = agent.invoke({
+        "messages": response1['messages'] + [
+            {"role": "user", "content": "再乘以 3 呢？"}
+        ]
+    })
     print(f"Agent：{response2['messages'][-1].content}")
 
     print("\n关键点：")
-    print("  - 使用 MemorySaver 作为 checkpointer")
-    print("  - 通过 thread_id 区分不同的对话")
-    print("  - Agent 自动记住上下文")
-    print("  - 不需要手动传递历史消息")
+    print("  - 多轮对话：传入之前的 messages")
+    print("  - Agent 能记住上下文")
+    print("  - 格式：上一轮的 response['messages'] + 新问题")
+
 
 # ============================================================================
 # 示例 6：Agent 最佳实践
@@ -308,11 +301,6 @@ def example_6_best_practices():
    - 测试各种问题类型
    - 测试边界情况
    - 验证工具选择是否正确
-
-6. API 注意事项（LangChain 1.0）
-   - 使用 create_agent（LangChain 1.0 新 API）
-   - LangChain 1.0 新 API
-   - 使用 MemorySaver 实现多轮对话
     """)
 
     print("\n示例：良好配置的 Agent")
@@ -339,12 +327,13 @@ def example_6_best_practices():
     })
     print(f"Agent 回复：{response['messages'][-1].content}")
 
+
 # ============================================================================
 # 主程序
 # ============================================================================
 def main():
     print("\n" + "="*70)
-    print(" LangChain 1.0 - Simple Agent (create_agent)")
+    print(" LangChain 1.0 - Simple Agent")
     print("="*70)
 
     try:
@@ -369,11 +358,11 @@ def main():
         print(" 完成！")
         print("="*70)
         print("\n核心要点：")
-        print("  ✅ create_agent 创建 Agent（LangChain 1.0）")
-        print("  ✅ Agent 自动判断何时使用工具")
-        print("  ✅ 执行循环：问题 → 工具调用 → 结果 → 回答")
-        print("  ✅ 使用 MemorySaver 实现多轮对话")
-        print("  ✅ prompt 参数定义 Agent 行为")
+        print("  create_agent 创建 Agent")
+        print("  Agent 自动判断何时使用工具")
+        print("  执行循环：问题 → 工具调用 → 结果 → 回答")
+        print("  多轮对话：传入历史 messages")
+        print("  system_prompt 定义 Agent 行为")
         print("\n下一步：")
         print("  06_agent_loop - 深入理解 Agent 执行循环")
 
@@ -383,6 +372,7 @@ def main():
         print(f"\n错误: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

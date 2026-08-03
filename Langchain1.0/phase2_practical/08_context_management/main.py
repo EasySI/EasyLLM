@@ -17,20 +17,13 @@ from langchain_core.tools import tool
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents.middleware import SummarizationMiddleware
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
-# 初始化模型
 model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
-
 
 @tool
 def calculator(operation: str, a: float, b: float) -> str:
@@ -41,6 +34,7 @@ def calculator(operation: str, a: float, b: float) -> str:
     }
     result = ops.get(operation, lambda x, y: 0)(a, b)
     return f"{a} {operation} {b} = {result}"
+
 
 # ============================================================================
 # 示例 1：问题演示 - 对话历史无限增长
@@ -61,8 +55,7 @@ def example_1_problem_unlimited_growth():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
-            checkpointer=InMemorySaver()
+        checkpointer=InMemorySaver()
     )
 
     config = {"configurable": {"thread_id": "long_conversation"}}
@@ -89,6 +82,7 @@ def example_1_problem_unlimited_growth():
     print("  - 超过模型 token 限制会报错")
     print("  - 每次调用都要传输全部历史，成本增加")
 
+
 # ============================================================================
 # 示例 2：解决方案 1 - SummarizationMiddleware（推荐）
 # ============================================================================
@@ -107,12 +101,11 @@ def example_2_summarization_middleware():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
-            checkpointer=InMemorySaver(),
+        checkpointer=InMemorySaver(),
         middleware=[
             SummarizationMiddleware(
                 model="groq:llama-3.3-70b-versatile",
-                max_tokens_before_summary=500  # 超过 500 tokens 就摘要
+                trigger=("tokens", 500)  # 超过 500 tokens 就摘要
             )
         ]
     )
@@ -142,6 +135,7 @@ def example_2_summarization_middleware():
     print("  - 保持对话历史在可控范围内")
     print("  - 重要信息通过摘要保留")
 
+
 # ============================================================================
 # 示例 3：理解 SummarizationMiddleware 参数
 # ============================================================================
@@ -160,12 +154,18 @@ SummarizationMiddleware 参数：
    - 用于生成摘要的模型
    - 可以用便宜的模型（如 gpt-3.5）降低成本
 
-2. max_tokens_before_summary
-   - 触发摘要的 token 数阈值
-   - 默认: 1000
-   - 建议：根据模型上下文窗口设置（如 4k 模型设为 3000）
+2. trigger (推荐)
+   - 触发摘要的条件
+   - trigger=("tokens", 500) - 超过 500 tokens 触发
+   - trigger=("messages", 10) - 超过 10 条消息触发
+   - 注意：max_tokens_before_summary 已废弃，请用 trigger
 
-3. summarization_prompt (可选)
+3. keep (可选)
+   - 保留多少最近的消息
+   - keep=("messages", 3) - 保留最近 3 条消息
+   - 注意：messages_to_keep 已废弃，请用 keep
+
+4. summarization_prompt (可选)
    - 自定义摘要提示词
    - 默认：简洁摘要对话历史
 
@@ -177,13 +177,15 @@ agent = create_agent(
     middleware=[
         SummarizationMiddleware(
             model="groq:llama-3.3-70b-versatile",  # 摘要模型
-            max_tokens_before_summary=500,         # 500 tokens 触发
+            trigger=("tokens", 500),               # 500 tokens 触发
+            keep=("messages", 3)                   # 保留最近 3 条
         )
     ],
     checkpointer=InMemorySaver()
 )
 ```
     """)
+
 
 # ============================================================================
 # 示例 4：手动消息修剪（trim_messages）
@@ -216,16 +218,18 @@ def example_4_manual_trimming():
 
     print(f"\n原始消息数: {len(messages)}")
 
-    # 只保留最近 4 条消息 
-    # 按 token 数裁剪（不严格条数）	max_tokens=N + 合理 token_counter
-    # 严格保留最后 N 条消息	max_count=N
+    # trim_messages 参数说明：
+    # - max_tokens: 最大数量（配合 token_counter 使用）
+    # - token_counter: 计数函数，用 len 表示按消息数量计数
+    # - strategy: "last"（保留最后）或 "first"（保留最前）
 
     trimmed = trim_messages(
         messages,
-        max_count=5,  # 严格保留最后 5 条消息
-        # max_tokens=100,  # 或使用 token 数限制
-        strategy="last",  # 保留最后的消息
-        token_counter=len  # 简单计数器（实际应该用 token 计数）这里其实不会被用到，因为 max_count 优先
+        max_tokens=5,        # 最多保留 5 条消息
+        token_counter=len,   # 用 len 计数 = 按消息数量（不是 token）
+        strategy="last",     # 保留最后的消息
+        include_system=True, # 保留系统消息（如果有）
+        start_on="human"     # 确保从 human 消息开始
     )
 
     print(f"修剪后消息数: {len(trimmed)}")
@@ -237,6 +241,7 @@ def example_4_manual_trimming():
     print("  - trim_messages 手动控制消息数量")
     print("  - 适合需要精确控制的场景")
     print("  - 需要自己管理修剪逻辑")
+
 
 # ============================================================================
 # 示例 5：对比不同策略
@@ -291,6 +296,7 @@ def example_5_comparison():
 - 只要最近几轮：trim_messages
     """)
 
+
 # ============================================================================
 # 示例 6：实际应用 - 客服机器人
 # ============================================================================
@@ -308,16 +314,17 @@ def example_6_practical_customer_service():
     agent = create_agent(
         model=model,
         tools=[calculator],
-        system_prompt="""你是客服助手。
+        system_prompt="""你是一个购物客服助手。
 特点：
-- 记住用户问题
+- 记住用户之前说的话
 - 简洁回答
-- 使用工具计算""",
+- 只在用户需要数学计算时使用 calculator 工具
+- 其他问题直接回答即可""",
         checkpointer=InMemorySaver(),
         middleware=[
             SummarizationMiddleware(
                 model="groq:llama-3.3-70b-versatile",
-                max_tokens_before_summary=800  # 适合客服场景
+                trigger=("tokens", 800)  # 适合客服场景
             )
         ]
     )
@@ -326,10 +333,10 @@ def example_6_practical_customer_service():
 
     # 模拟客服对话
     conversations = [
-        "你好，我想咨询订单",
-        "我的订单号是 12345",
-        "帮我算一下 100 乘以 2 的优惠价",
-        "谢谢"
+        "你好，我想买一件衣服",
+        "一件衬衫 199 元，我想买 3 件，帮我算一下总价",
+        "如果打 8 折呢？帮我算算折后价",
+        "好的谢谢，我就买了"
     ]
 
     for msg in conversations:
@@ -345,6 +352,7 @@ def example_6_practical_customer_service():
     print("  - 自动管理对话长度")
     print("  - 重要信息（订单号）通过摘要保留")
     print("  - 适合生产环境")
+
 
 # ============================================================================
 # 主程序
@@ -389,6 +397,7 @@ def main():
         print(f"\n错误: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

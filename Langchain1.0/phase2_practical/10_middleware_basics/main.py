@@ -18,20 +18,13 @@ from langchain_core.tools import tool
 from langchain.agents.middleware import AgentMiddleware
 from langgraph.checkpoint.memory import InMemorySaver
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
-# 初始化模型
 model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
-
 
 @tool
 def get_weather(city: str) -> str:
@@ -42,6 +35,7 @@ def get_weather(city: str) -> str:
         "深圳": "雨天，22°C"
     }
     return weather_data.get(city, "未知城市")
+
 
 # ============================================================================
 # 示例 1：最简单的中间件
@@ -78,6 +72,7 @@ class LoggingMiddleware(AgentMiddleware): # ✅ 类名随意
         print(f"[中间件] 响应类型: {last_message.__class__.__name__}")
         return None  # 返回 None 表示不修改状态
 
+
 def example_1_basic_middleware():
     """
     示例1：基础中间件 - 日志记录
@@ -91,7 +86,6 @@ def example_1_basic_middleware():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
         middleware=[LoggingMiddleware()]  # 添加中间件
     )
 
@@ -103,6 +97,7 @@ def example_1_basic_middleware():
     print("  - before_model 在模型调用前执行")
     print("  - after_model 在模型响应后执行")
     print("  - 返回 None 表示不修改状态")
+
 
 # ============================================================================
 # 示例 2：修改状态的中间件
@@ -124,6 +119,7 @@ class CallCounterMiddleware(AgentMiddleware):
         print(f"\n[计数器] 模型调用次数: {self.count}")
         return None  # 不修改 state
 
+
 def example_2_state_modification():
     """
     示例2：中间件内部状态 - 计数器
@@ -137,7 +133,6 @@ def example_2_state_modification():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
         middleware=[CallCounterMiddleware()],
         checkpointer=InMemorySaver()
     )
@@ -158,15 +153,18 @@ def example_2_state_modification():
     print("  - 不依赖 Agent state（更可靠）")
     print("  - 返回 None 表示不修改 Agent 状态")
 
+
 # ============================================================================
 # 示例 3：消息修剪中间件
 # ============================================================================
 class MessageTrimmerMiddleware(AgentMiddleware):
     """
-    消息修剪中间件 - 限制消息数量
+    消息修剪中间件 - 限制发送给模型的消息数量
 
-    before_model 修改消息列表
-    注意：需要配合无 checkpointer 使用，否则历史会被恢复
+    重要说明：
+    - before_model 只修改发送给模型的消息，不影响 agent 内部状态
+    - 如果需要真正限制历史长度，需要在外部手动修剪
+    - 或者使用 SummarizationMiddleware（推荐）
     """
 
     def __init__(self, max_messages=5):
@@ -175,42 +173,46 @@ class MessageTrimmerMiddleware(AgentMiddleware):
         self.trimmed_count = 0  # 统计修剪次数
 
     def before_model(self, state, runtime):
-        """模型调用前，修剪消息"""
+        """模型调用前，修剪发送给模型的消息"""
         messages = state.get('messages', [])
 
         if len(messages) > self.max_messages:
-            # 保留最近的 N 条消息
+            # 只保留最近的 N 条消息发送给模型
             trimmed_messages = messages[-self.max_messages:]
             self.trimmed_count += 1
-            print(f"\n[修剪] 消息从 {len(messages)} 条减少到 {len(trimmed_messages)} 条 (第{self.trimmed_count}次修剪)")
+            print(f"\n[修剪] 发送给模型的消息从 {len(messages)} 条减少到 {len(trimmed_messages)} 条 (第{self.trimmed_count}次修剪)")
             return {"messages": trimmed_messages}
 
         return None
 
+
 def example_3_message_trimming():
     """
-    示例3：消息修剪 - 防止消息过多
+    示例3：消息修剪 - 限制发送给模型的消息数量
 
-    展示如何在调用前修改消息列表
-    重点：手动累积消息，观察修剪效果
+    重要：此示例演示 middleware 的工作原理
+    - middleware 只影响传给模型的消息
+    - agent 返回的 response['messages'] 仍包含完整历史
+    - 要真正限制历史长度，需要手动管理或用 SummarizationMiddleware
     """
     print("\n" + "="*70)
-    print("示例 3：消息修剪 - 限制消息数量")
+    print("示例 3：消息修剪 - 限制发送给模型的消息数量")
     print("="*70)
 
-    print("\n[说明] 不使用 checkpointer，手动管理消息历史\n")
+    print("\n[说明] middleware 只影响传给模型的消息，不影响 agent 内部状态\n")
 
-    middleware = MessageTrimmerMiddleware(max_messages=4)  # 最多保留 4 条
+    middleware = MessageTrimmerMiddleware(max_messages=4)  # 最多发送 4 条给模型
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
         middleware=[middleware]
         # 不使用 checkpointer
     )
 
-    # 手动管理消息历史
+    # 手动管理消息历史，并在每次调用后手动修剪
     messages = []
+    max_history = 4  # 我们自己维护的最大历史长度
+
     for i in range(6):
         print(f"\n--- 第 {i+1} 次对话 ---")
 
@@ -218,28 +220,33 @@ def example_3_message_trimming():
         new_msg = {"role": "user", "content": f"消息{i+1}：简短回复"}
         messages.append(new_msg)
 
-        print(f"调用前消息数: {len(messages)}")
+        print(f"发送前消息数: {len(messages)}")
 
-        # 调用 agent（middleware会修剪）
+        # 调用 agent
         response = agent.invoke({"messages": messages})
 
-        # 获取完整对话（包含AI响应）
-        messages = response['messages']
+        # 获取 AI 回复并添加到我们的历史
+        ai_response = response['messages'][-1]
+        messages.append({"role": "assistant", "content": ai_response.content})
 
-        print(f"调用后消息数: {len(messages)}")
-        if len(messages) <= 4:
-            print(f"消息列表: {[m.content[:15] for m in messages]}")
+        # 手动修剪我们维护的历史（保持在 max_history 条以内）
+        if len(messages) > max_history:
+            messages = messages[-max_history:]
+            print(f"[手动修剪] 历史修剪到 {len(messages)} 条")
 
-    print(f"\n修剪统计: 共修剪了 {middleware.trimmed_count} 次")
+        print(f"当前历史消息数: {len(messages)}")
+        print(f"消息内容: {[m['content'][:15] if isinstance(m, dict) else m.content[:15] for m in messages]}")
+
+    print(f"\n中间件修剪统计: 共修剪了 {middleware.trimmed_count} 次（发送给模型时）")
 
     print("\n关键点：")
-    print("  - before_model 在传给模型前修剪消息")
-    print("  - max_messages=4 限制发送给模型的消息数")
-    print("  - 但返回的 response 会包含新生成的消息")
-    print("  - 不使用 checkpointer 避免历史恢复")
+    print("  - middleware 只影响发送给模型的消息")
+    print("  - 要真正限制历史，需要手动修剪或用 SummarizationMiddleware")
+    print("  - 本示例同时演示了 middleware 修剪 + 手动修剪")
     print("\n生产建议：")
-    print("  - 简单修剪用这种方式")
-    print("  - 复杂场景用 SummarizationMiddleware（第8章）")
+    print("  - 简单场景：手动修剪历史")
+    print("  - 复杂场景：用 SummarizationMiddleware（第8章）")
+
 
 # ============================================================================
 # 示例 4：输出验证中间件
@@ -270,6 +277,7 @@ class OutputValidationMiddleware(AgentMiddleware):
 
         return None
 
+
 def example_4_output_validation():
     """
     示例4：输出验证 - 检查响应质量
@@ -283,7 +291,6 @@ def example_4_output_validation():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
         middleware=[OutputValidationMiddleware(max_length=50)]
     )
 
@@ -297,6 +304,7 @@ def example_4_output_validation():
     print("  - after_model 可以验证输出")
     print("  - 可以实现重试、截断等逻辑")
     print("  - 保证输出质量")
+
 
 # ============================================================================
 # 示例 5：多个中间件组合
@@ -313,6 +321,7 @@ class TimingMiddleware(AgentMiddleware):
     def after_model(self, state, runtime):
         print("[计时] 模型调用完成")
         return None
+
 
 def example_5_multiple_middleware():
     """
@@ -353,7 +362,6 @@ def example_5_multiple_middleware():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
         middleware=[Middleware1(), Middleware2(), Middleware3()]
     )
 
@@ -364,6 +372,7 @@ def example_5_multiple_middleware():
     print("  - before_model: 正序执行（1→2→3）")
     print("  - after_model: 逆序执行（3→2→1）")
     print("  - 类似洋葱模型：1→2→3→模型→3→2→1")
+
 
 # ============================================================================
 # 示例 6：条件跳转（高级）
@@ -396,6 +405,7 @@ class MaxCallsMiddleware(AgentMiddleware):
         print("次数+1")
         return None
 
+
 def example_6_conditional_jump():
     """
     示例6：调用限制 - 通过异常阻止调用
@@ -409,7 +419,6 @@ def example_6_conditional_jump():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
         middleware=[MaxCallsMiddleware(max_calls=2)],
         checkpointer=InMemorySaver()
     )
@@ -439,6 +448,7 @@ def example_6_conditional_jump():
     print("  - jump_to 在 middleware 中可能不按预期工作")
     print("  - 推荐用异常来实现流程控制")
 
+
 # ============================================================================
 # 示例 7：内置中间件使用
 # ============================================================================
@@ -457,11 +467,10 @@ def example_7_builtin_middleware():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
         middleware=[
             SummarizationMiddleware(
                 model="groq:llama-3.3-70b-versatile",
-                max_tokens_before_summary=200  # 超过 200 token 就摘要
+                trigger=("tokens", 200)  # 超过 200 token 就摘要
             )
         ],
         checkpointer=InMemorySaver()
@@ -489,6 +498,7 @@ def example_7_builtin_middleware():
     print("  - 防止消息历史无限增长")
     print("  - 第 08 章详细学习过")
 
+
 # ============================================================================
 # 主程序
 # ============================================================================
@@ -498,17 +508,17 @@ def main():
     print("="*70)
 
     try:
-        # example_1_basic_middleware()
-        # input("\n按 Enter 继续...")
+        example_1_basic_middleware()
+        input("\n按 Enter 继续...")
 
-        # example_2_state_modification()
-        # input("\n按 Enter 继续...")
+        example_2_state_modification()
+        input("\n按 Enter 继续...")
 
-        # example_3_message_trimming()
-        # input("\n按 Enter 继续...")
+        example_3_message_trimming()
+        input("\n按 Enter 继续...")
 
-        # example_4_output_validation()
-        # input("\n按 Enter 继续...")
+        example_4_output_validation()
+        input("\n按 Enter 继续...")
 
         example_5_multiple_middleware()
         input("\n按 Enter 继续...")
@@ -539,6 +549,7 @@ def main():
         print(f"\n错误: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

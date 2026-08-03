@@ -29,19 +29,13 @@ from weather import get_weather
 from calculator import calculator
 from web_search import web_search
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
-# 初始化模型
 model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
 
 
 # ============================================================================
@@ -80,6 +74,7 @@ def example_1_simple_tool():
     print("  1. @tool 装饰器会自动提取函数名、docstring、参数")
     print("  2. docstring 很重要！AI 用它理解工具的功能")
     print("  3. 类型注解帮助 AI 理解参数类型")
+
 
 # ============================================================================
 # 示例 2：带参数的工具
@@ -122,6 +117,7 @@ def example_2_tool_with_params():
         """
     ''')
 
+
 # ============================================================================
 # 示例 3：多参数工具
 # ============================================================================
@@ -149,6 +145,7 @@ def example_3_multiple_params():
         result = calculator.invoke(test)
         print(f"  {result}")
 
+
 # ============================================================================
 # 示例 4：可选参数工具
 # ============================================================================
@@ -168,9 +165,10 @@ def example_4_optional_params():
     print(result1)
 
     # 指定参数
-    print("\n指定返回2个结果：")
+    print("\n指定返回2条结果：")
     result2 = web_search.invoke({"query": "LangChain", "num_results": 2})
     print(result2)
+
 
 # ============================================================================
 # 示例 5：工具绑定到模型（预览）
@@ -206,6 +204,7 @@ def example_5_bind_tools():
 
     print("\n💡 下一步：")
     print("  在 05_simple_agent 中，我们将学习如何让 AI 自动执行工具")
+
 
 # ============================================================================
 # 示例 6：工具的最佳实践
@@ -251,6 +250,7 @@ def example_6_best_practices():
    - 不要把多个功能塞进一个工具
     """)
 
+
 # ============================================================================
 # 主程序
 # ============================================================================
@@ -294,6 +294,7 @@ def main():
         print(f"\n错误: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

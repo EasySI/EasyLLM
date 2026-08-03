@@ -2,7 +2,7 @@
 LangChain 1.0 - Memory Basics (内存管理基础)
 ==========================================
 
-本模块重点讲解：
+本模块重点讲解
 1. InMemorySaver - LangGraph 提供的内存管理
 2. checkpointer 参数 - 为 Agent 添加内存
 3. thread_id - 会话管理
@@ -16,20 +16,13 @@ from langchain.agents import create_agent
 from langchain_core.tools import tool
 from langgraph.checkpoint.memory import InMemorySaver
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
-# 初始化模型
 model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
-
 
 # 创建一个简单的工具
 @tool
@@ -40,6 +33,7 @@ def get_user_info(user_id: str) -> str:
         "456": "李四，30岁，设计师"
     }
     return users.get(user_id, "用户不存在")
+
 
 # ============================================================================
 # 示例 1：没有内存的 Agent（对比）
@@ -57,8 +51,7 @@ def example_1_no_memory():
     # 创建没有 checkpointer 的 Agent
     agent = create_agent(
         model=model,
-        tools=[],
-        system_prompt="你是一个有帮助的助手。"
+        tools=[]
     )
 
     print("\n第一轮对话：")
@@ -77,6 +70,7 @@ def example_1_no_memory():
     print("  - Agent 不记得第一轮对话")
     print("  - 每次 invoke 都是全新的开始")
     print("  - 需要手动传入历史消息才能记住")
+
 
 # ============================================================================
 # 示例 2：使用 InMemorySaver 添加内存
@@ -97,8 +91,7 @@ def example_2_with_memory():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
-            checkpointer=InMemorySaver()  # 添加内存管理
+        checkpointer=InMemorySaver()  # 添加内存管理
     )
 
     # config 中指定 thread_id
@@ -123,6 +116,7 @@ def example_2_with_memory():
     print("  - checkpointer 自动保存对话历史")
     print("  - thread_id 用于区分不同的会话")
 
+
 # ============================================================================
 # 示例 3：多个会话（不同 thread_id）
 # ============================================================================
@@ -139,8 +133,7 @@ def example_3_multiple_threads():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
-            checkpointer=InMemorySaver()
+        checkpointer=InMemorySaver()
     )
 
     # 会话 1
@@ -182,6 +175,7 @@ def example_3_multiple_threads():
     print("  - Agent 能正确记住每个会话的内容")
     print("  - 适合多用户聊天场景")
 
+
 # ============================================================================
 # 示例 4：带工具的内存 Agent
 # ============================================================================
@@ -198,8 +192,7 @@ def example_4_memory_with_tools():
     agent = create_agent(
         model=model,
         tools=[get_user_info],
-        system_prompt="你是一个有帮助的助手。",
-            checkpointer=InMemorySaver()
+        checkpointer=InMemorySaver()
     )
 
     config = {"configurable": {"thread_id": "session_1"}}
@@ -223,6 +216,7 @@ def example_4_memory_with_tools():
     print("  - 不需要重新调用工具")
     print("  - 对话上下文包含工具使用历史")
 
+
 # ============================================================================
 # 示例 5：查看内存状态
 # ============================================================================
@@ -239,8 +233,7 @@ def example_5_inspect_memory():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。",
-            checkpointer=InMemorySaver()
+        checkpointer=InMemorySaver()
     )
 
     config = {"configurable": {"thread_id": "inspect_thread"}}
@@ -274,6 +267,7 @@ def example_5_inspect_memory():
     print("  - checkpointer 保存完整的消息历史")
     print("  - response['messages'] 包含所有历史消息")
     print("  - 每次调用都会追加新消息")
+
 
 # ============================================================================
 # 示例 6：实际应用场景
@@ -326,6 +320,7 @@ def example_6_practical_use():
     print("  - Agent 记住了查询的结果")
     print("  - 实现了流畅的多轮对话")
 
+
 # ============================================================================
 # 主程序
 # ============================================================================
@@ -369,6 +364,7 @@ def main():
         print(f"\n错误: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

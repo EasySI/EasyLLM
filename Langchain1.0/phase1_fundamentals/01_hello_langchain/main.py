@@ -18,18 +18,36 @@ from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
+# ============================================================================
+# 环境配置
+# ============================================================================
+
 # 加载环境变量
 load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
+# 验证 API 密钥是否存在
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
     raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
+        "\n" + "="*70 + "\n"
+        "❌ 错误：未找到 GROQ_API_KEY 环境变量！\n"
+        "="*70 + "\n"
+        "请按照以下步骤设置 API 密钥：\n\n"
+        "1️⃣ 访问 https://console.groq.com/keys 获取免费 API 密钥\n"
+        "2️⃣ 复制 .env.example 为 .env\n"
+        "   命令：cp .env.example .env\n"
+        "3️⃣ 在 .env 文件中填入你的 Groq API Key：\n"
+        "   GROQ_API_KEY=gsk_your_actual_key_here\n"
+        "4️⃣ 重新运行程序\n"
+        "="*70
     )
 
-# 初始化模型
-model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
+# 验证 API 密钥格式（Groq API key 通常以 gsk_ 开头）
+if not GROQ_API_KEY.startswith("gsk_"):
+    print("\n" + "⚠️  警告：你的 GROQ_API_KEY 格式可能不正确")
+    print("   Groq API 密钥通常以 'gsk_' 开头")
+    print("   请确认你从 https://console.groq.com/keys 获取了正确的密钥\n")
+
 
 # ============================================================================
 # 示例 1：最简单的 LLM 调用
@@ -48,7 +66,10 @@ def example_1_simple_invoke():
 
     # 初始化模型
     # 格式：init_chat_model("提供商:模型名称")
-    # 使用文件开头初始化的 model
+    model = init_chat_model(
+        "groq:llama-3.3-70b-versatile",  # Groq 提供的 Llama 3.3 模型
+        api_key=GROQ_API_KEY
+    )
 
     # 使用字符串直接调用模型
     response = model.invoke("你好！请用一句话介绍什么是人工智能。")
@@ -57,6 +78,7 @@ def example_1_simple_invoke():
     print(f"AI 回复: {response.content}")
     print(f"\n返回对象类型: {type(response)}")
     print(f"返回对象: {response}")
+
 
 # ============================================================================
 # 示例 2：使用消息列表进行对话
@@ -76,7 +98,10 @@ def example_2_messages():
     print("示例 2：使用消息列表构建对话")
     print("="*70)
 
-    # model 已在文件开头通过 get_model() 初始化
+    model = init_chat_model(
+        "groq:llama-3.3-70b-versatile",
+        api_key=GROQ_API_KEY
+    )
 
     # 构建消息列表
     messages = [
@@ -103,6 +128,7 @@ def example_2_messages():
     response2 = model.invoke(messages)
     print(f"\nAI 回复:\n{response2.content}")
 
+
 # ============================================================================
 # 示例 3：使用字典格式的消息
 # ============================================================================
@@ -119,7 +145,10 @@ def example_3_dict_messages():
     print("示例 3：使用字典格式的消息（推荐）")
     print("="*70)
 
-    # model 已在文件开头通过 get_model() 初始化
+    model = init_chat_model(
+        "groq:llama-3.3-70b-versatile",
+        api_key=GROQ_API_KEY
+    )
 
     # 使用字典格式构建消息
     messages = [
@@ -134,6 +163,7 @@ def example_3_dict_messages():
     response = model.invoke(messages)
 
     print(f"\nAI 回复:\n{response.content}")
+
 
 # ============================================================================
 # 示例 4：配置模型参数
@@ -157,6 +187,7 @@ def example_4_model_parameters():
     # 创建一个温度较低的模型（更确定性）
     model_deterministic = init_chat_model(
         "groq:llama-3.3-70b-versatile",
+        api_key=GROQ_API_KEY,
         temperature=0.0,  # 最确定性
         max_tokens=100    # 限制输出长度
     )
@@ -176,6 +207,7 @@ def example_4_model_parameters():
     # 创建一个温度较高的模型（更随机）
     model_creative = init_chat_model(
         "groq:llama-3.3-70b-versatile",
+        api_key=GROQ_API_KEY,
         temperature=1.5,  # 更有创造性
         max_tokens=100
     )
@@ -186,6 +218,7 @@ def example_4_model_parameters():
     for i in range(2):
         response = model_creative.invoke(prompt)
         print(f"  第 {i+1} 次: {response.content}")
+
 
 # ============================================================================
 # 示例 5：理解 invoke 方法的返回值
@@ -204,7 +237,10 @@ def example_5_response_structure():
     print("示例 5：invoke 返回值详解")
     print("="*70)
 
-    # model 已在文件开头通过 get_model() 初始化
+    model = init_chat_model(
+        "groq:llama-3.3-70b-versatile",
+        api_key=GROQ_API_KEY
+    )
 
     response = model.invoke("解释一下什么是递归？用一句话。")
 
@@ -226,6 +262,7 @@ def example_5_response_structure():
         print(f"   完成 tokens: {usage.get('completion_tokens', 'N/A')}")
         print(f"   总计 tokens: {usage.get('total_tokens', 'N/A')}")
 
+
 # ============================================================================
 # 示例 6：错误处理
 # ============================================================================
@@ -244,7 +281,10 @@ def example_6_error_handling():
     print("="*70)
 
     try:
-        # model 已在文件开头通过 get_model() 初始化
+        model = init_chat_model(
+            "groq:llama-3.3-70b-versatile",
+            api_key=GROQ_API_KEY
+        )
 
         response = model.invoke("Hello! How are you?")
         print(f"成功调用模型!")
@@ -256,6 +296,7 @@ def example_6_error_handling():
         print(f"网络错误: {e}")
     except Exception as e:
         print(f"未知错误: {type(e).__name__}: {e}")
+
 
 # ============================================================================
 # 示例 7：多模型对比
@@ -288,13 +329,18 @@ def example_7_multiple_models():
             print(f"\n使用模型: {model_name}")
             print("-" * 70)
 
-            # model 已在文件开头通过 get_model() 初始化
+            model = init_chat_model(
+                model_name,
+                api_key=GROQ_API_KEY,
+                temperature=0.7
+            )
 
             response = model.invoke(prompt)
             print(f"回复: {response.content}")
 
         except Exception as e:
             print(f"模型 {model_name} 调用失败: {e}")
+
 
 # ============================================================================
 # 主程序
@@ -329,6 +375,7 @@ def main():
         print(f"\n运行出错: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

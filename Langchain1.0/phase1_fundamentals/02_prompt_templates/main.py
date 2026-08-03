@@ -24,18 +24,12 @@ from langchain_core.prompts import (
     AIMessagePromptTemplate
 )
 
-# 加载环境变量
+# ============================================================================
+# 环境配置
+# ============================================================================
+
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
-
-# 初始化模型
-model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
 
 if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
     raise ValueError(
@@ -44,6 +38,8 @@ if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
     )
 
 # 初始化模型
+model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
+
 
 # ============================================================================
 # 示例 1：为什么需要提示词模板？
@@ -98,6 +94,7 @@ def example_1_why_templates():
     print("  3. 类型安全 - 自动验证变量")
     print("  4. 可测试 - 更容易编写测试用例")
 
+
 # ============================================================================
 # 示例 2：PromptTemplate 基础用法
 # ============================================================================
@@ -147,6 +144,7 @@ def example_2_prompt_template_basics():
     prompt_value = template3.invoke({"theme": "春天", "style": "现代"})
     print(f"生成的提示词：\n{prompt_value.text}\n")
 
+
 # ============================================================================
 # 示例 3：ChatPromptTemplate - 聊天消息模板
 # ============================================================================
@@ -186,16 +184,23 @@ def example_3_chat_prompt_template():
     print(f"\nAI 回复：{response.content[:150]}...\n")
 
     # 方法 2：使用字符串简写（最简洁）
+    # 直接传入字符串（不用元组），会自动被当作 human/user 消息
     print("【方法 2：字符串简写】")
 
     simple_template = ChatPromptTemplate.from_messages([
         ("system", "你是一个友好的助手"),
-        ("user", "{question}")
+        "{question}"  # 等价于 ("human", "{question}")，省略角色
     ])
 
     messages = simple_template.format_messages(question="什么是机器学习？")
+
+    print("生成的消息：")
+    for msg in messages:
+        print(f"  {msg.type}: {msg.content}")
+
     response = model.invoke(messages)
-    print(f"AI 回复：{response.content[:100]}...\n")
+    print(f"\nAI 回复：{response.content[:100]}...\n")
+
 
 # ============================================================================
 # 示例 4：多轮对话模板
@@ -241,6 +246,7 @@ def example_4_conversation_template():
     response = model.invoke(messages)
     print(f"\nAI 回复：{response.content}\n")
 
+
 # ============================================================================
 # 示例 5：使用 MessagePromptTemplate（高级）
 # ============================================================================
@@ -284,6 +290,7 @@ def example_5_message_templates():
 
     response = model.invoke(messages)
     print(f"AI 回复：{response.content[:200]}...\n")
+
 
 # ============================================================================
 # 示例 6：部分变量（Partial Variables）
@@ -332,6 +339,9 @@ def example_6_partial_variables():
     response2 = model.invoke(messages2)
     print(f"文章 2：{response2.content[:150]}...\n")
 
+
+
+
 # ============================================================================
 # 示例 9：与 LCEL 链式调用（预览）
 # ============================================================================
@@ -372,6 +382,7 @@ def example_9_lcel_chains():
     print("  3. 易于调试和监控")
     print("  （详细内容将在后续模块学习）")
 
+
 # ============================================================================
 # 主程序
 # ============================================================================
@@ -400,6 +411,8 @@ def main():
         example_6_partial_variables()
         input("\n按 Enter 继续...")
 
+
+
         example_9_lcel_chains()
 
         print("\n" + "="*70)
@@ -423,6 +436,7 @@ def main():
         print(f"\n运行出错：{e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

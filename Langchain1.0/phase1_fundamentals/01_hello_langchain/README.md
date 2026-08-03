@@ -738,7 +738,7 @@ print(f"Token 使用: {usage.get('total_tokens', 'N/A')}")
    - 新：使用 `init_chat_model` 统一接口
 
 2. **简化的 Agent 创建**
-   - 旧：使用 `initialize_agent` 等已弃用函数
+   - 旧：使用 `create_react_agent` 等多个函数
    - 新：使用 `create_agent` 统一接口（我们将在模块 5 学习）
 
 3. **LangGraph 作为运行时**
