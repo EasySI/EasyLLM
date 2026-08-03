@@ -30,21 +30,12 @@ DATA_DIR = SCRIPT_DIR / "data"
 # 确保 data 目录存在
 DATA_DIR.mkdir(exist_ok=True)
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
-
-# 初始化模型
-model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
 if not PINECONE_API_KEY or PINECONE_API_KEY == "your_pinecone_api_key_here":
     print("\n[警告] 未设置 PINECONE_API_KEY")
@@ -53,6 +44,8 @@ if not PINECONE_API_KEY or PINECONE_API_KEY == "your_pinecone_api_key_here":
     print("2. 获取 API Key")
     print("3. 在 .env 文件中设置 PINECONE_API_KEY=你的key")
     print("\n当前将跳过需要 Pinecone 的示例\n")
+
+model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
 
 
 # ============================================================================
@@ -116,6 +109,7 @@ RAG (Retrieval-Augmented Generation) 是 LangChain 的核心应用场景之一�
 
     return documents
 
+
 # ============================================================================
 # 示例 2：文本分割 - Text Splitters
 # ============================================================================
@@ -162,6 +156,7 @@ def example_2_text_splitters(documents):
     print("  - RecursiveCharacterTextSplitter 智能分割")
 
     return chunks
+
 
 # ============================================================================
 # 示例 3：向量嵌入 - Embeddings
@@ -229,6 +224,7 @@ def example_3_embeddings():
     print("  - 向量可用于相似度搜索")
 
     return embeddings
+
 
 # ============================================================================
 # 示例 4：Pinecone 向量存储 - 创建索引
@@ -303,6 +299,7 @@ def example_4_pinecone_setup():
 
     return index_name, embeddings
 
+
 # ============================================================================
 # 示例 5：文档索引 - 存入向量数据库
 # ============================================================================
@@ -351,6 +348,7 @@ def example_5_index_documents(index_name, embeddings, chunks):
 
     return vectorstore
 
+
 # ============================================================================
 # 示例 6：RAG 问答 - 使用检索工具
 # ============================================================================
@@ -388,7 +386,7 @@ def example_6_rag_qa(vectorstore):
 3. 如果知识库中没有相关信息，诚实告知"""
     )
 
-    # 测试问答
+    # 测试回答
     questions = [
         "LangChain 有哪些核心组件？",
         "RAG 是什么？",
@@ -411,6 +409,7 @@ def example_6_rag_qa(vectorstore):
     print("  - Agent 自动调用工具检索")
     print("  - 基于检索结果生成答案")
     print("  - 这就是 RAG (检索增强生成)")
+
 
 # ============================================================================
 # 主程序
@@ -466,6 +465,7 @@ def main():
         print(f"\n错误: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

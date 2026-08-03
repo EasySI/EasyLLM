@@ -31,19 +31,13 @@ CHROMA_DIR = SCRIPT_DIR / "chroma_db"
 DATA_DIR.mkdir(exist_ok=True)
 CHROMA_DIR.mkdir(exist_ok=True)
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
-# 初始化模型
 model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
 
 
 # ============================================================================
@@ -173,6 +167,7 @@ A: Best Match 25，一种基于词频的检索算法，适合精确匹配
 
     return chunks
 
+
 # ============================================================================
 # 示例 2：向量检索器 (语义搜索)
 # ============================================================================
@@ -228,6 +223,7 @@ def example_2_vector_retriever(chunks):
 
     return vector_retriever, vectorstore
 
+
 # ============================================================================
 # 示例 3：BM25 检索器 (关键词搜索)
 # ============================================================================
@@ -235,7 +231,7 @@ def example_3_bm25_retriever(chunks):
     """
     示例3：BM25 检索器
 
-    使用 BM25 算法进行关键词匹配
+    使用 BM25 算法进行关键词匹配，快: 无需嵌入，直接文本匹配
     """
     print("\n" + "="*70)
     print("示例 3：BM25 检索器 (关键词搜索)")
@@ -273,6 +269,7 @@ def example_3_bm25_retriever(chunks):
             print(f"  最相关: {preview}...")
 
     return bm25_retriever
+
 
 # ============================================================================
 # 示例 4：混合检索器 (Ensemble Retriever)
@@ -341,6 +338,7 @@ def example_4_ensemble_retriever(vector_retriever, bm25_retriever):
 
     return ensemble_retriever
 
+
 # ============================================================================
 # 示例 5：权重优化实验
 # ============================================================================
@@ -385,6 +383,7 @@ def example_5_weight_optimization(vector_retriever, bm25_retriever):
     print("  - 技术文档: [0.4, 0.6] - 稍偏向语义")
     print("  - 代码搜索: [0.6, 0.4] - 稍偏向精确匹配")
     print("  - 通用场景: [0.5, 0.5] - 平衡")
+
 
 # ============================================================================
 # 示例 6：RAG Agent with Hybrid Search
@@ -448,6 +447,7 @@ def example_6_rag_agent_hybrid(ensemble_retriever):
     print("  - 同时覆盖语义和精确匹配")
     print("  - 提高 RAG 系统的准确性和鲁棒性")
 
+
 # ============================================================================
 # 主程序
 # ============================================================================
@@ -502,6 +502,7 @@ def main():
         print(f"\n错误: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

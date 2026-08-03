@@ -8,73 +8,23 @@ LangChain 1.0 - Validation & Retry (验证和重试)
 3. Pydantic 验证错误处理
 4. 自定义验证逻辑
 5. 重试循环实现
-
-⚠️ 注意：
-- with_structured_output() 可能在某些模型上不完全支持
-- 如遇到错误，示例会显示错误信息并跳过
 """
 
 import os
-import json
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
-from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field, field_validator, ValidationError
-from typing import Optional, List, TypeVar, Type
+from typing import Optional, List
 from enum import Enum
 import time
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
-# 初始化模型
 model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
-
-# ==================== 辅助函数 ====================
-
-T = TypeVar('T', bound=BaseModel)
-
-def safe_structured_output(prompt: str, output_class: Type[T], llm=None) -> T:
-    """
-    安全的结构化输出函数
-    """
-    if llm is None:
-        llm = model
-    
-    try:
-        structured_llm = llm.with_structured_output(output_class)
-        return structured_llm.invoke(prompt)
-    except Exception as e:
-        print(f"  ⚠️ with_structured_output 失败: {e}")
-        print("  📝 使用 JSON 解析 fallback...")
-    
-    # Fallback: 手动 JSON 解析
-    json_prompt = f"""{prompt}
-
-请严格按照JSON格式返回，只返回JSON，不要其他文字。"""
-    
-    response = llm.invoke([HumanMessage(content=json_prompt)])
-    content = response.content.strip()
-    
-    if "```json" in content:
-        content = content.split("```json")[1].split("```")[0]
-    elif "```" in content:
-        content = content.split("```")[1].split("```")[0]
-    
-    try:
-        data = json.loads(content.strip())
-        return output_class.model_validate(data)
-    except Exception as e2:
-        raise ValueError(f"无法解析结构化输出: {e2}")
-
 
 
 # ============================================================================
@@ -115,6 +65,7 @@ def example_1_with_retry():
     print("  - 适用于临时性错误（网络波动、API限流）")
     print("  - 不适用于逻辑错误（提示词错误、参数错误）")
 
+
 # ============================================================================
 # 示例 2：with_fallbacks() - 降级方案
 # ============================================================================
@@ -132,7 +83,8 @@ def example_2_with_fallbacks():
     primary_model = model
 
     # 备用模型（更可靠或更便宜）
-    fallback_
+    fallback_model = init_chat_model("groq:llama-3.1-8b-instant", api_key=GROQ_API_KEY)
+
     # 配置降级
     llm_with_fallbacks = primary_model.with_fallbacks([fallback_model])
 
@@ -150,6 +102,7 @@ def example_2_with_fallbacks():
     except Exception as e:
         print(f"\n所有模型都失败: {e}")
 
+
 # ============================================================================
 # 示例 3：Pydantic 字段验证
 # ============================================================================
@@ -166,6 +119,7 @@ class User(BaseModel):
         if '@' not in v:
             raise ValueError('邮箱必须包含 @')
         return v
+
 
 def example_3_pydantic_validation():
     """
@@ -206,6 +160,7 @@ def example_3_pydantic_validation():
     print("  - @field_validator - 自定义验证逻辑")
     print("  - ValidationError - 验证失败时抛出")
 
+
 # ============================================================================
 # 示例 4：LLM 输出验证 + 重试
 # ============================================================================
@@ -221,6 +176,7 @@ class Product(BaseModel):
         if v.lower() == "unknown":
             raise ValueError('产品名称不能是 unknown')
         return v
+
 
 def example_4_llm_validation_retry():
     """
@@ -295,6 +251,7 @@ def example_4_llm_validation_retry():
     print("  - 在提示中强调类型要求")
     print("  - 限制最大重试次数防止无限循环")
 
+
 # ============================================================================
 # 示例 5：自定义验证函数
 # ============================================================================
@@ -303,6 +260,7 @@ class Article(BaseModel):
     title: str = Field(description="标题")
     content: str = Field(description="内容")
     word_count: int = Field(description="字数")
+
 
 def validate_article(article: Article) -> bool:
     """
@@ -322,6 +280,7 @@ def validate_article(article: Article) -> bool:
         return False
 
     return True
+
 
 def example_5_custom_validation():
     """
@@ -362,6 +321,7 @@ def example_5_custom_validation():
     print("  - 自定义函数验证业务逻辑")
     print("  - 可以结合使用实现完整验证")
 
+
 # ============================================================================
 # 示例 6：完整的验证 + 重试工作流
 # ============================================================================
@@ -376,6 +336,7 @@ class ExtractedData(BaseModel):
         if v.strip() == "":
             raise ValueError('名称不能为空')
         return v.strip()
+
 
 def extract_with_validation(text: str, max_retries: int = 3) -> Optional[ExtractedData]:
     """
@@ -421,6 +382,7 @@ def extract_with_validation(text: str, max_retries: int = 3) -> Optional[Extract
 
     return None
 
+
 def example_6_complete_workflow():
     """
     示例6：完整的验证 + 重试工作流
@@ -455,6 +417,7 @@ def example_6_complete_workflow():
     print("  - 返回 Optional 表示可能失败")
     print("  - 适合集成到生产系统")
 
+
 # ============================================================================
 # 示例 7：组合使用 retry + fallbacks + validation
 # ============================================================================
@@ -477,7 +440,7 @@ def example_7_combined():
     structured_primary = model.with_structured_output(ExtractedData)
 
     # 2. 配置备用模型（也要先创建结构化输出）
-    fallback_model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
+    fallback_model = init_chat_model("groq:llama-3.1-8b-instant", api_key=GROQ_API_KEY)
     structured_fallback = fallback_model.with_structured_output(ExtractedData)
 
     # 3. 添加重试（在结构化输出之后）
@@ -513,6 +476,7 @@ def example_7_combined():
     print("  - 多层防护: 验证 → 重试 → 降级")
     print("  - 生产环境推荐配置")
 
+
 # ============================================================================
 # 主程序
 # ============================================================================
@@ -522,20 +486,20 @@ def main():
     print("="*70)
 
     try:
-        # example_1_with_retry()
-        # input("\n按 Enter 继续...")
+        example_1_with_retry()
+        input("\n按 Enter 继续...")
 
-        # example_2_with_fallbacks()
-        # input("\n按 Enter 继续...")
+        example_2_with_fallbacks()
+        input("\n按 Enter 继续...")
 
-        # example_3_pydantic_validation()
-        # input("\n按 Enter 继续...")
+        example_3_pydantic_validation()
+        input("\n按 Enter 继续...")
 
-        # example_4_llm_validation_retry()
-        # input("\n按 Enter 继续...")
+        example_4_llm_validation_retry()
+        input("\n按 Enter 继续...")
 
-        # example_5_custom_validation()
-        # input("\n按 Enter 继续...")
+        example_5_custom_validation()
+        input("\n按 Enter 继续...")
 
         example_6_complete_workflow()
         input("\n按 Enter 继续...")
@@ -566,6 +530,7 @@ def main():
         print(f"\n错误: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

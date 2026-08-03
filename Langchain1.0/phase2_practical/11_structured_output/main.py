@@ -8,93 +8,22 @@ LangChain 1.0 - Structured Output (结构化输出)
 3. 嵌套模型和复杂结构
 4. 枚举类型和验证
 5. 实际应用场景
-
-⚠️ 注意：
-- with_structured_output() 可能在某些模型上不完全支持
-- 如遇到错误，模块会自动使用 JSON 解析作为 fallback
 """
 
 import os
-import json
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
-from langchain_core.messages import HumanMessage
 from pydantic import BaseModel, Field
-from typing import Optional, List, TypeVar, Type
+from typing import Optional, List
 from enum import Enum
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
-# 初始化模型
 model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
-
-# ==================== 辅助函数 ====================
-
-T = TypeVar('T', bound=BaseModel)
-
-def safe_structured_output(prompt: str, output_class: Type[T]) -> T:
-    """
-    安全的结构化输出函数
-    
-    先尝试 with_structured_output，失败则使用 JSON 解析 fallback
-    """
-    # 尝试使用 with_structured_output
-    try:
-        structured_llm = create_safe_structured_llm(output_class)
-        result = structured_llm.invoke(prompt)
-        return result
-    except Exception as e:
-        print(f"  ⚠️ with_structured_output 失败: {e}")
-        print("  📝 使用 JSON 解析 fallback...")
-    
-    # Fallback: 手动 JSON 解析
-    json_prompt = f"""{prompt}
-
-请严格按照以下JSON格式返回（不要添加任何其他内容）：
-{json.dumps(output_class.model_json_schema().get('properties', {}), indent=2, ensure_ascii=False)}
-
-只返回JSON，不要其他文字。"""
-    
-    response = model.invoke([HumanMessage(content=json_prompt)])
-    content = response.content.strip()
-    
-    # 清理 Markdown 格式
-    if "```json" in content:
-        content = content.split("```json")[1].split("```")[0]
-    elif "```" in content:
-        content = content.split("```")[1].split("```")[0]
-    
-    try:
-        data = json.loads(content.strip())
-        return output_class.model_validate(data)
-    except Exception as e2:
-        print(f"  ❌ JSON 解析也失败: {e2}")
-        raise ValueError(f"无法解析结构化输出: {e2}")
-
-
-
-def create_safe_structured_llm(output_class):
-    """创建带 fallback 的结构化输出 LLM"""
-    base_llm = model.with_structured_output(output_class)
-    
-    class SafeStructuredLLM:
-        def invoke(self, prompt):
-            try:
-                return base_llm.invoke(prompt)
-            except Exception as e:
-                print(f"  ⚠️ 结构化输出失败，使用 fallback: {e}")
-                return safe_structured_output(prompt, output_class)
-    
-    return SafeStructuredLLM()
 
 
 # ============================================================================
@@ -106,6 +35,7 @@ class Person(BaseModel):
     age: int = Field(description="年龄")
     occupation: str = Field(description="职业")
 
+
 def example_1_basic_structured_output():
     """
     示例1：基础结构化输出
@@ -116,10 +46,11 @@ def example_1_basic_structured_output():
     print("示例 1：基础结构化输出 - Pydantic 模型")
     print("="*70)
 
+    # 创建结构化输出的 LLM
+    structured_llm = model.with_structured_output(Person)
+
     print("\n提示: 张三是一名 30 岁的软件工程师")
-    
-    # 使用安全的结构化输出函数
-    result = safe_structured_output("张三是一名 30 岁的软件工程师", Person)
+    result = structured_llm.invoke("张三是一名 30 岁的软件工程师")
 
     print(f"\n返回类型: {type(result)}")
     print(f"姓名: {result.name}")
@@ -131,6 +62,7 @@ def example_1_basic_structured_output():
     print("  - 不需要手动解析 JSON")
     print("  - 自动类型验证（age 必须是 int）")
 
+
 # ============================================================================
 # 示例 2：提取多个对象（列表）
 # ============================================================================
@@ -140,9 +72,11 @@ class Book(BaseModel):
     author: str = Field(description="作者")
     year: int = Field(description="出版年份")
 
+
 class BookList(BaseModel):
     """书籍列表"""
     books: List[Book] = Field(description="书籍列表")
+
 
 def example_2_list_extraction():
     """
@@ -154,7 +88,7 @@ def example_2_list_extraction():
     print("示例 2：提取多个对象 - 列表")
     print("="*70)
 
-    structured_llm = create_safe_structured_llm(BookList)
+    structured_llm = model.with_structured_output(BookList)
 
     text = """
     《三体》是刘慈欣 2008 年的科幻小说。
@@ -174,6 +108,7 @@ def example_2_list_extraction():
     print("  - LLM 自动识别并提取多个对象")
     print("  - 返回的是 Python 列表，可直接遍历")
 
+
 # ============================================================================
 # 示例 3：嵌套模型
 # ============================================================================
@@ -182,11 +117,13 @@ class Address(BaseModel):
     city: str = Field(description="城市")
     district: str = Field(description="区")
 
+
 class Company(BaseModel):
     """公司信息"""
     name: str = Field(description="公司名称")
     employee_count: int = Field(description="员工数量")
     address: Address = Field(description="公司地址")
+
 
 def example_3_nested_models():
     """
@@ -198,7 +135,7 @@ def example_3_nested_models():
     print("示例 3：嵌套模型 - 复杂结构")
     print("="*70)
 
-    structured_llm = create_safe_structured_llm(Company)
+    structured_llm = model.with_structured_output(Company)
 
     print("\n提示: 阿里巴巴公司在杭州滨江区，有约 10 万名员工")
     result = structured_llm.invoke("阿里巴巴公司在杭州滨江区，有约 10 万名员工")
@@ -212,6 +149,7 @@ def example_3_nested_models():
     print("  - LLM 自动识别层级关系")
     print("  - 通过 result.address.city 访问嵌套字段")
 
+
 # ============================================================================
 # 示例 4：可选字段和默认值
 # ============================================================================
@@ -221,6 +159,7 @@ class Product(BaseModel):
     price: float = Field(description="价格")
     description: Optional[str] = Field(None, description="产品描述（可选）")
     stock: int = Field(100, description="库存（默认 100）")
+
 
 def example_4_optional_and_defaults():
     """
@@ -232,7 +171,7 @@ def example_4_optional_and_defaults():
     print("示例 4：可选字段和默认值")
     print("="*70)
 
-    structured_llm = create_safe_structured_llm(Product)
+    structured_llm = model.with_structured_output(Product)
 
     print("\n场景1：完整信息")
     result1 = structured_llm.invoke("iPhone 15 售价 5999 元，最新款智能手机，库存 50 台")
@@ -253,6 +192,7 @@ def example_4_optional_and_defaults():
     print("  - Field(100, ...) 设置默认值")
     print("  - LLM 未提供的信息会使用默认值")
 
+
 # ============================================================================
 # 示例 5：枚举类型
 # ============================================================================
@@ -262,11 +202,13 @@ class Priority(str, Enum):
     MEDIUM = "中"
     HIGH = "高"
 
+
 class Task(BaseModel):
     """任务"""
     title: str = Field(description="任务标题")
     priority: Priority = Field(description="优先级：低/中/高")
     completed: bool = Field(False, description="是否完成")
+
 
 def example_5_enum_types():
     """
@@ -278,7 +220,7 @@ def example_5_enum_types():
     print("示例 5：枚举类型 - 限制可选值")
     print("="*70)
 
-    structured_llm = create_safe_structured_llm(Task)
+    structured_llm = model.with_structured_output(Task)
 
     print("\n提示: 完成季度报告，这是紧急任务")
     result = structured_llm.invoke("完成季度报告，这是紧急任务")
@@ -292,6 +234,7 @@ def example_5_enum_types():
     print("  - LLM 只能选择 LOW/MEDIUM/HIGH")
     print("  - 自动验证，无效值会报错")
 
+
 # ============================================================================
 # 示例 6：实际应用 - 客户信息提取
 # ============================================================================
@@ -303,6 +246,7 @@ class CustomerInfo(BaseModel):
     issue: str = Field(description="问题描述")
     urgency: Priority = Field(description="紧急程度")
 
+
 def example_6_customer_info_extraction():
     """
     示例6：客户信息提取
@@ -313,7 +257,7 @@ def example_6_customer_info_extraction():
     print("示例 6：实际应用 - 客户信息提取")
     print("="*70)
 
-    structured_llm = create_safe_structured_llm(CustomerInfo)
+    structured_llm = model.with_structured_output(CustomerInfo)
 
     conversation = """
     客服: 您好，请问有什么可以帮助您？
@@ -336,6 +280,7 @@ def example_6_customer_info_extraction():
     print("  - 工单自动分类")
     print("  - 紧急问题优先处理")
 
+
 # ============================================================================
 # 示例 7：实际应用 - 产品评论分析
 # ============================================================================
@@ -345,6 +290,7 @@ class Sentiment(str, Enum):
     NEUTRAL = "中性"
     NEGATIVE = "负面"
 
+
 class Review(BaseModel):
     """评论"""
     product: str = Field(description="产品名称")
@@ -352,6 +298,7 @@ class Review(BaseModel):
     sentiment: Sentiment = Field(description="情感倾向")
     pros: List[str] = Field(description="优点列表")
     cons: List[str] = Field(description="缺点列表")
+
 
 def example_7_review_analysis():
     """
@@ -363,7 +310,7 @@ def example_7_review_analysis():
     print("示例 7：实际应用 - 产品评论分析")
     print("="*70)
 
-    structured_llm = create_safe_structured_llm(Review)
+    structured_llm = model.with_structured_output(Review)
 
     review_text = """
     这款 iPhone 15 Pro 真的很不错！摄像头非常强大，夜拍效果惊艳。
@@ -385,6 +332,7 @@ def example_7_review_analysis():
     print("  - 批量处理用户评论")
     print("  - 自动生成分析报告")
     print("  - 发现产品改进点")
+
 
 # ============================================================================
 # 主程序
@@ -435,6 +383,7 @@ def main():
         print(f"\n错误: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

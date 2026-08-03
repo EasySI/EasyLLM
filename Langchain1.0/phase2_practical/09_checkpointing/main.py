@@ -8,44 +8,33 @@ LangChain 1.0 - Checkpointing (检查点持久化)
 3. 跨进程、跨重启的对话持久化
 4. 实际应用场景
 
-⚠️ API 说明：
-- 本模块使用 `create_react_agent`（来自 langgraph.prebuilt）
-- Checkpointing 是 LangGraph 的核心特性
-- 配合 create_react_agent 可以完整展示状态持久化
 
-工作流程：
-  1. invoke 前：LangGraph 自动调用 checkpointer.get(thread_id="user_123")      
+1. invoke 前：LangGraph 自动调用 checkpointer.get(thread_id="user_123")      
     - 查询数据库，读取该 thread_id 的历史消息
     - 如果是第一次，返回空列表
-  2. invoke 中：Agent 处理时会看到完整历史
+  2. invoke 中：Agent 处理时会看到完整历史(默认确实会全部读取，)
   state = {
       "messages": [历史消息1, 历史消息2, 新消息]  # 自动合并
   }
   3. invoke 后：LangGraph 自动调用 checkpointer.put(thread_id, state)
     - 将新的完整状态写入数据库
+    - 数据库存储：(thread_id, timestamp, messages)
 """
 
 import os
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
-from langchain.agents import create_agent  # ✅ LangGraph 预构建图
+from langchain.agents import create_agent
 from langchain_core.tools import tool
 from langgraph.checkpoint.sqlite import SqliteSaver
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
-# 初始化模型
 model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
-
 
 @tool
 def get_order_status(order_id: str) -> str:
@@ -55,6 +44,7 @@ def get_order_status(order_id: str) -> str:
         "67890": "配送中，今天下午送达"
     }
     return orders.get(order_id, "订单不存在")
+
 
 # ============================================================================
 # 示例 1：InMemorySaver 的限制（对比）
@@ -77,7 +67,6 @@ def example_1_inmemory_limitation():
     agent = create_agent(
         model=model,
         tools=[],
-        system_prompt="你是一个有帮助的助手。记住用户告诉你的信息。",
         checkpointer=InMemorySaver()
     )
 
@@ -103,6 +92,7 @@ def example_1_inmemory_limitation():
     print("  ❌ 不适合生产环境")
     print("\n解决方案：使用 SqliteSaver 持久化到数据库")
 
+
 # ============================================================================
 # 示例 2：使用 SqliteSaver 持久化
 # ============================================================================
@@ -126,7 +116,6 @@ def example_2_sqlite_saver():
         agent = create_agent(
             model=model,
             tools=[],
-            system_prompt="你是一个有帮助的助手。",
             checkpointer=checkpointer  # 使用 SQLite 持久化
         )
 
@@ -153,6 +142,7 @@ def example_2_sqlite_saver():
         print("  ✅ 可以跨进程访问")
         print("  ✅ 适合生产环境")
 
+
 # ============================================================================
 # 示例 3：验证跨进程持久化
 # ============================================================================
@@ -175,7 +165,6 @@ def example_3_verify_persistence():
         agent = create_agent(
             model=model,
             tools=[],
-            system_prompt="你是一个有帮助的助手。",
             checkpointer=checkpointer
         )
 
@@ -194,6 +183,7 @@ def example_3_verify_persistence():
         print("  - Agent 记得之前的对话（李四）")
         print("  - 即使创建了新的 agent 实例")
         print("  - 因为 SQLite 保存了完整历史")
+
 
 # ============================================================================
 # 示例 4：多用户会话管理
@@ -214,7 +204,6 @@ def example_4_multi_user_sessions():
         agent = create_agent(
             model=model,
             tools=[],
-            system_prompt="你是一个有帮助的助手。",
             checkpointer=checkpointer
         )
 
@@ -259,6 +248,7 @@ def example_4_multi_user_sessions():
         print("  - 所有会话持久化在同一数据库")
         print(f"  - 数据库文件：{db_path}")
 
+
 # ============================================================================
 # 示例 5：带工具的持久化 Agent
 # ============================================================================
@@ -278,7 +268,6 @@ def example_5_tools_with_persistence():
         agent = create_agent(
             model=model,
             tools=[get_order_status],
-            system_prompt="你是一个有帮助的助手。",
             checkpointer=checkpointer
         )
 
@@ -304,6 +293,7 @@ def example_5_tools_with_persistence():
         print("  - Agent 记住了订单 12345 的查询结果")
         print("  - 工具调用历史也被持久化")
         print("  - 无需重复调用工具")
+
 
 # ============================================================================
 # 示例 6：实际应用 - 客服系统
@@ -367,6 +357,7 @@ def example_6_customer_service():
         print("  - 即使客服系统重启也不影响")
         print("  - 生产级应用的标准做法")
 
+
 # ============================================================================
 # 示例 7：SqliteSaver 参数说明
 # ============================================================================
@@ -383,7 +374,6 @@ SqliteSaver 创建方式：
 
 1. from_conn_string + with 语句（推荐）
    with SqliteSaver.from_conn_string("checkpoints.sqlite") as checkpointer:
-       system_prompt="你是一个有帮助的助手。"
        agent = create_agent(model=model, checkpointer=checkpointer)
        agent.invoke(...)
 
@@ -415,6 +405,7 @@ SqliteSaver 创建方式：
 ✅ 定期备份数据库文件
     """)
 
+
 # ============================================================================
 # 主程序
 # ============================================================================
@@ -425,16 +416,16 @@ def main():
 
     try:
         example_1_inmemory_limitation()
-        input("\n按 Enter 继续...")
+        # input("\n按 Enter 继续...")
 
-        example_2_sqlite_saver()
-        input("\n按 Enter 继续...")
+        # example_2_sqlite_saver()
+        # input("\n按 Enter 继续...")
 
-        example_3_verify_persistence()
-        input("\n按 Enter 继续...")
+        # example_3_verify_persistence()
+        # input("\n按 Enter 继续...")
 
-        example_4_multi_user_sessions()
-        input("\n按 Enter 继续...")
+        # example_4_multi_user_sessions()
+        # input("\n按 Enter 继续...")
 
         example_5_tools_with_persistence()
         input("\n按 Enter 继续...")
@@ -461,6 +452,7 @@ def main():
         print(f"\n错误: {e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

@@ -7,6 +7,7 @@
 
 from langchain_core.tools import tool
 
+
 @tool
 def calculator(operation: str, a: float, b: float) -> str:
     """
@@ -35,6 +36,7 @@ def calculator(operation: str, a: float, b: float) -> str:
         return f"{a} {operation} {b} = {result}"
     except Exception as e:
         return f"计算错误：{e}"
+
 
 # 测试工具
 if __name__ == "__main__":

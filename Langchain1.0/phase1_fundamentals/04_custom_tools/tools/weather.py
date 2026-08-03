@@ -7,6 +7,7 @@
 
 from langchain_core.tools import tool
 
+
 @tool
 def get_weather(city: str) -> str:
     """
@@ -27,6 +28,7 @@ def get_weather(city: str) -> str:
     }
 
     return weather_data.get(city, f"抱歉，暂时没有{city}的天气数据")
+
 
 # 测试工具
 if __name__ == "__main__":

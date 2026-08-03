@@ -24,26 +24,19 @@ DATA_DIR = SCRIPT_DIR / "data"
 # 确保 data 目录存在
 DATA_DIR.mkdir(exist_ok=True)
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
-
-# 初始化模型
-model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
 if not PINECONE_API_KEY or PINECONE_API_KEY == "your_pinecone_api_key_here":
     print("\n[警告] 未设置 PINECONE_API_KEY")
     print("Pinecone 相关示例将被跳过\n")
     PINECONE_API_KEY = None
+
+model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
 
 
 def main():
@@ -154,6 +147,7 @@ RAG (Retrieval-Augmented Generation) 是 LangChain 的核心应用场景之一�
     print(" 演示完成！")
     print("=" * 70)
     print("\n完整功能请运行: python main.py")
+
 
 if __name__ == "__main__":
     try:

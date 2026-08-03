@@ -8,20 +8,13 @@ from langchain.chat_models import init_chat_model
 from langchain.agents import create_agent
 from langgraph.checkpoint.sqlite import SqliteSaver
 
-# 加载环境变量
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
+if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
+    raise ValueError("请先设置 GROQ_API_KEY")
 
-# 初始化模型
 model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
-
 
 print("=" * 70)
 print("测试：SqliteSaver 持久化功能")
@@ -34,11 +27,10 @@ db_path = "test_checkpoints.sqlite"
 with SqliteSaver.from_conn_string(db_path) as checkpointer:  # 直接传文件名
     # 创建 Agent
     agent = create_agent(
-            model=model,
-            tools=[],
-            system_prompt="你是一个有帮助的助手。",
-            checkpointer=checkpointer
-        )
+        model=model,
+        tools=[],
+        checkpointer=checkpointer
+    )
 
     config = {"configurable": {"thread_id": "test_persistence"}}
 
@@ -56,11 +48,10 @@ print("[创建新的 agent 实例...]")
 # 模拟重启：创建新的 checkpointer 和 agent
 with SqliteSaver.from_conn_string(db_path) as checkpointer_new:  # 直接传文件名
     agent_new = create_agent(
-            model=model,
-            tools=[],
-            system_prompt="你是一个有帮助的助手。",
-            checkpointer=checkpointer_new
-        )
+        model=model,
+        tools=[],
+        checkpointer=checkpointer_new
+    )
 
     print("用户: 我叫什么？")
     response2 = agent_new.invoke(

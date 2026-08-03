@@ -14,21 +14,12 @@ from langchain.chat_models import init_chat_model
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here":
-    raise ValueError(
-        "\n请先在 .env 文件中设置有效的 GROQ_API_KEY\n"
-        "访问 https://console.groq.com/keys 获取免费密钥"
-    )
-
-# 初始化模型
-model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
-
 if not GROQ_API_KEY or GROQ_API_KEY == "your_groq_api_key_here_replace_this":
     print("请先在 .env 文件中设置有效的 GROQ_API_KEY")
     exit(1)
 
 # 初始化模型
-# model 已在文件开头通过 get_model() 初始化
+model = init_chat_model("groq:llama-3.3-70b-versatile", api_key=GROQ_API_KEY)
 
 print("="*70)
 print(" invoke 方法深入实践")
@@ -80,6 +71,7 @@ def exercise_1_input_formats():
     print("   - 格式2：有系统提示（简洁），回复较短")
     print("   - 格式3：有系统提示（幽默），回复风格不同")
 
+
 # ============================================================================
 # 练习 2：系统提示的威力
 # ============================================================================
@@ -123,6 +115,7 @@ def exercise_2_system_prompt():
     print(f"{response3.content}\n")
 
     print("💡 体会：同一个问题，不同的系统提示，得到完全不同的回答！")
+
 
 # ============================================================================
 # 练习 3：多轮对话 - 理解对话历史
@@ -181,6 +174,7 @@ def exercise_3_conversation():
     print(f"\n💡 观察：对话列表包含 {len(conversation)} 条消息")
     print("   AI 能记住之前的对话，因为我们每次都传递了完整历史！")
 
+
 # ============================================================================
 # 练习 4：错误的多轮对话示例
 # ============================================================================
@@ -234,6 +228,7 @@ def exercise_4_wrong_conversation():
     print("✅ 成功：AI 记住了你叫李四！")
     print("\n💡 关键：必须传递完整的对话历史列表")
 
+
 # ============================================================================
 # 练习 5：理解返回值
 # ============================================================================
@@ -283,6 +278,7 @@ def exercise_5_response_structure():
     print(f"本次调用成本：${cost:.6f}")
 
     print("\n💡 提示：Token 统计对成本控制很重要！")
+
 
 # ============================================================================
 # 练习 6：实战 - 构建一个简单的聊天机器人
@@ -344,6 +340,7 @@ def exercise_6_chatbot():
     print(f"对话历史包含 {len(conversation)} 条消息")
     print("="*70)
 
+
 # ============================================================================
 # 运行所有练习
 # ============================================================================
@@ -389,6 +386,7 @@ def main():
         print(f"\n运行出错：{e}")
         import traceback
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()
