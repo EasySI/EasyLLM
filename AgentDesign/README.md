@@ -1,0 +1,140 @@
+# 智能体系统设计与实战：基于langchain与langgraph
+
+本项目以《design_and_practice_of_agent_systems》为基础框架，进行了全面的重构与升级，聚焦智能体系统的“实战化”落地能力培养。区别于理论性教程，项目中所有内容模块、案例代码及业务场景均为全新编写，深度贴合企业实际开发需求，旨在帮助开发者快速掌握智能体系统从设计到落地的全流程技术栈。
+
+项目核心技术依托LangChain与LangGraph两大主流框架构建，所有案例均经过本地环境运行测试，确保代码可复现、场景可落地。案例场景均选自电商、客服、教育、内容创作等高频业务领域，覆盖智能体开发的核心技术范式。
+
+项目规划在后期章节推出多个企业级规模的综合项目案例，聚焦复杂场景下的智能体系统设计与优化，为中大型项目开发提供直接参考。
+
+## 案例核心
+
+- **极致实战导向**：拒绝“纸上谈兵”，所有案例从需求分析、架构设计到代码实现均遵循企业开发标准，包含完整的调试思路与问题解决方案。
+
+- **技术栈前沿稳定**：基于LangChain（智能体链路编排）与LangGraph（复杂流程可视化与并行控制）构建，llm以deepseek为主，适配企业级部署需求。
+
+- **场景覆盖全面**：从基础的提示词编排到高级的多智能体协同、记忆架构设计，覆盖智能体开发全阶段技术点，场景贴合实际业务。
+
+- **规模梯度进阶**：从单一场景小案例到企业级复杂系统，逐步提升技术难度与工程复杂度，适配不同层级开发者需求。
+
+## 项目内容
+### 第一部分：理论与案例分析——基础篇
+
+* [第一章：智能体实战之提示词链：分而治之的智能处理范式](chapter1/第1章.md)
+
+    —— 客户反馈分析与报告生成系统
+
+* [第二章：智能体实战之路由模式：智能决策与动态流程控制](chapter2/第2章.md)
+
+    —— 智能客服系统
+
+* [第三章：智能体实战之并行化：多任务协同的智能体](chapter3/第3章.md)
+
+    —— 文档内容分析系统
+
+* [第四章：智能体实战之反思模式：智能体的自我进化机制-生产者与评审者](chapter4/第4章2.md)
+
+    —— 内容创作与审核系统
+
+* [第五章：智能体实战之工具使用模式：赋予AI Agent“行动”的能力](chapter5/第5章.md)
+
+    —— 电商商品助手系统
+
+* [第六章：智能体实战之智能规划：AI Agent的高级决策能力](chapter6/第6章.md)
+
+    —— 旅行规划系统
+
+* [第七章：智能体实战之多智能体协同：重塑复杂问题解决之道](chapter7/第7章.md)
+
+    —— 个性化教育系统
+
+* [第八章：智能体实战之Agent的记忆架构：从瞬时工作到持久智慧](chapter8/第8章.md)
+
+    —— 聊天助手系统
+
+* [第九章：智能体实战之智能体的进化：从预设规则到自适应学习](chapter9/第9章.md)
+
+    —— 个性化商品推荐系统
+
+* [第十章：智能体实战之模型上下文协议（MCP）：agent的通用“USB”](chapter10/第10章.md)
+
+    —— 企业级销售订单自动化处理系统
+
+* [第十一章：智能体实战之目标设定与监控：实现自主智能的关键](chapter11/第11章.md)
+
+    —— PDF论文分析助手系统
+
+* [第十二章：智能体实战之韧性之道：异常处理与恢复](chapter12/第12章.md)
+
+    —— 机器人装配线异常恢复Agent系统
+
+* [第十三章：智能体实战之人机协同：融合人类智慧与AI能力](chapter13/第13章.md)
+
+    —— 人机协同医疗诊断系统
+
+* [第十四章：智能体实战之检索增强生成（RAG）：让AI基于事实思考 ](chapter14/第14章.md)
+
+    —— pdf多模态rag问答
+
+* [第十五章：智能体实战之A2A——构建agent协作生态系统的通用语言](chapter15/第15章.md)
+
+    —— 多智能体研究报告生成系统
+	
+* [第十六章：智能体实战之资源感知优化：智能系统的动态资源管理](chapter16/第16章.md)
+
+    —— 工厂质量控制（QC）流程系统
+
+* [第十七章：智能体实战之高级推理方法：重新思考与实现](chapter17/第17章.md)
+
+    —— 内部知识库的法律分析助手
+
+* [第十八章：智能体实战之防护栏：构建安全可靠的人工智能系统](chapter18/第18章.md)
+
+    —— 办公RPA流程自动化助手
+
+* [第十九章：智能体实战之评估与监控：确保智能系统的可靠性与性能](chapter19/第19章.md)
+
+    —— 智能合同审核
+
+* [第二十章：智能体实战之优先级排序：智能决策的核心机制](chapter20/第20章.md)
+
+    —— 智能邮件处理系统
+
+* [第二十一章：智能体实战之探索与发现：主动认知拓展的新范式](chapter21/第21章.md)
+
+    —— 智能网络安全漏洞分析系统
+
+### 第二部分：项目实战——中级篇
+
+* [第二十二章：食品配料营养安全分析工具](https://github.com/jiangnanboy/food_packaging_analysis)
+
+* [第二十三章：智能医疗诊断助手](https://github.com/jiangnanboy/medical-diagnosis-assistant)
+
+* [第二十四章：LLM 推理服务器基准测试工具](https://github.com/jiangnanboy/simple_llm_benchmarking)
+
+* [第二十五章：ChatExcel:智能表格数据分析的工具](https://github.com/jiangnanboy/ChatExcel)
+
+* [第二十六章：企业合同审核系统](https://github.com/jiangnanboy/contract_review)
+
+* [第二十七章：智能写作与文章总结](https://github.com/jiangnanboy/ai_writer_summary)
+
+* [第二十八章：中文知识图谱生成](https://github.com/jiangnanboy/llm-knowledge-graph)
+
+* [第二十九章：生成训练数据](https://github.com/jiangnanboy/llm_dataset_generation)
+
+* [第三十章：算术和推理](https://github.com/jiangnanboy/llm_agent_math)
+
+* [第三十一章：智能客服支持助手项目](https://github.com/jiangnanboy/customer_support_assistant)
+
+* [第三十二章：pdf多模态rag问答](https://github.com/jiangnanboy/pdf_multimodal_rag)
+
+* [第三十三章：提取卡证票据关键信息](https://github.com/jiangnanboy/Image_KIE_LLM)
+
+### 第三部分：项目实战——高级篇
+
+## requirements
+requirements.txt
+
+## contact
+1. github：https://jiangnanboy.github.io
+2. blog：https://blog.csdn.net/qq_20182781
+3. email:2229029156@qq.com
